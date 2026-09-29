@@ -1,0 +1,306 @@
+---
+title: 'Data Visualization with ggplot2 '
+author: "Luck B. Simelus"
+date: "2026-09-27"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE)
+```
+
+## Loading packages and importing the dataset
+
+```{r packages-and-import}
+# Load the required packages
+library(pacman)
+pacman::p_load(
+  rio, here, tidyverse, knitr, kableExtra, skimr, RColorBrewer, viridis,
+  formatR, gridExtra, janitor, ggplot2, ggpubr, cowplot, gghighlight, ggokabeito
+)
+
+# Import the clean NHANES dataset
+nhanes_data <- import(here("data", "cleaned_NHANES.csv"))
+```
+
+## Exercise 1: Reproducing and arranging ggplot2 figures
+
+```{r exrecise-1-cowplot, fig.height=4, fig.width=10, fig.cap="Bar plot of age and ethnicity by gender with cowplot", fig.align='center'}
+# Recreate the figures
+figure_1 <- nhanes_data %>% 
+  filter(age >=18) %>%
+ggplot(aes(x = age, fill = gender)) +
+  geom_histogram(binwidth = 5, position = "dodge")
+
+figure_2 <- nhanes_data %>%
+  ggplot(aes(x = ethnicity_2, fill = gender)) +
+  geom_bar(position = "fill")
+
+# combine the plots with the cowplot package
+plot_grid(figure_1, figure_2)
+```
+
+```{r exrecise-1-ggarrange, fig.height=4, fig.width=10, fig.cap="Bar plot of age and ethnicity by gender with ggarrange", fig.align='center'}
+# combine the plots with ggarrange
+ggarrange(figure_1, figure_2,
+  common.legend = TRUE, legend = "top"
+)
+```
+
+The layout produced with ggarrange() looks better for these two plots because it allows us to use a single legend for both figures.
+The cowplot package layout produced two separate legends, which took up unnecessary space and made the combined figure look less clean and almost unreadable.
+
+## Exercise 2 : Visualizing key characteristics
+
+### Age
+```{r exrecise-2-age, fig.height=4, fig.width=8, fig.align='center'}
+# Age distribution
+p_age <- ggplot(nhanes_data, aes(x = age)) +
+  geom_histogram(binwidth = 5, fill = "steelblue") +
+  labs(
+    title = "Age distribrution",
+    x = "Age (years)",
+    y = "Number of participants"
+  )
+
+ggsave(
+  "age_distribrution.png",
+  plot = p_age,
+  path = here("figures"),
+  width = 8, height = 6
+)
+
+p_age
+```
+For the age distribution in our sample, there appears to be a relatively high number of participants under 18 years old, with up to 3,000 participants in the 5–10 and 10–15 age groups.
+From ages 20 to 80, there are approximately 1,000 to 1,500 participants in each 5-year age group. The only exception is the 70–75 age group, which has fewer than 1,000 participants.
+
+### Gender
+```{r exrecise-2-gender, fig.height=4, fig.width=8, fig.align='center'}
+# Gender distribution
+p_gender <- ggplot(nhanes_data, aes(x = gender)) +
+  geom_bar(aes(fill = gender)) +
+  labs(
+    title = "Gender distribrution",
+    x = "Gender",
+    y = "Number of participants",
+    fill = "Gender"
+  )
+
+ggsave(
+  "gender_distribrution.png",
+  plot = p_gender,
+  path = here("figures"),
+  width = 8, height = 6
+)
+
+p_gender
+```
+The sample appears to have a relatively even 50–50 split between males and females, with slightly more female participants than male participants.
+
+### Ethnicity
+```{r exrecise-2-ethnicity, fig.height=4, fig.width=10, fig.align='center'}
+# ethnicity_1 and ethnicity_2
+p_eth1 <- ggplot(nhanes_data, aes(y = ethnicity_1)) +
+  geom_bar(aes(fill = ethnicity_1)) +
+  labs(
+    title = "Ethnicity 1 distribrution",
+    x = "Number of participants",
+    y = "Ethnicity 1",
+    fill = "Ethnicity 1"
+  )
+
+ggsave(
+  "ethnicity_1_distribrution.png",
+  plot = p_eth1,
+  path = here("figures"),
+  width = 8, height = 6
+)
+
+p_eth2 <- ggplot(nhanes_data, aes(y = ethnicity_2)) +
+  geom_bar(aes(fill = ethnicity_2)) +
+  labs(
+    title = "Ethnicity 2 distribrution",
+    x = "Number of participants",
+    y = "Ethnicity 2",
+    fill = "Ethnicity 2"
+  )
+ggsave(
+  "ethnicity_2_distribrution.png",
+  plot = p_eth2,
+  path = here("figures"),
+  width = 8, height = 6
+)
+
+# combine the plots with ggarrange
+p_eth_1_2 <- ggarrange(
+  p_eth1, p_eth2,
+  common.legend = FALSE, legend = "top"
+)
+
+ggsave(
+  "combined_ethnicity_distribrution.png",
+  plot = p_eth_1_2,
+  path = here("figures"),
+  width = 10, height = 6
+)
+
+# Displaying both ethnicity variables distribution
+p_eth_1_2
+```
+
+For both ethnicity variables, there are more White participants in the sample (approximately 10,000), followed by Black participants (about 6,500) and Mexican participants (about 5,000). 
+There are also approximately 3,000 Asian participants, 3,000 participants in the Other Hispanic category, and 1,500 in the Other category.
+
+When comparing the two ethnicity variables, ethnicity_1 does not have a separate category for Asian participants and instead includes them in the Other category. Therefore, I will keep ethnicity_2 because it provides more detailed information about the participants’ ethnicity and allows us to distinguish the Asian group from the Other category
+
+```{r exrecise-2-ethnicity-2}
+nhanes_data <- nhanes_data %>%
+  select(-ethnicity_1)
+```
+
+## Exercise 3 : Improving ggplot figure
+
+### Points that need improvement
+
+* The different colors are not necessary if the goal is simply to show weight changes over time.
+* The legend is not needed since the participant lines can be distinguished without color.
+* The default gridlines can be distracting, particularly the vertical gridlines. Horizontal gridlines are more useful because they make it easier to compare participants’ weights.
+* The figure could have a clearer presentation by using a simple line and a minimal theme.
+
+### How I would improve it
+
+1. Remove the color so all line have the same color.
+2. Remove the legend since color is no longer being used to identify participants.
+3. Keep only the major horizontal gridlines to make weight comparisons easier.
+4. Remove the minor gridlines and vertical gridlines for a cleaner appearance.
+5. Keep the axes and labels so the relationship between Week and Weight remains clear.
+
+```{r exrecise-3, fig.height=4, fig.width=6, fig.cap="Participant's weight over the 4 months diet", fig.align='center'}
+diet_data <- import(here("data", "diet.csv"))
+ggplot(diet_data, aes(x = Week, y = Weight, group = Participant)) +
+  geom_line() +
+  labs(
+    x = "Week",
+    y = "Weight"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.y = element_line()
+  )
+```
+This produces a simpler figure that emphasizes how each participant's weight changes over the 16 weeks diet period.
+
+## Exercise 4 : Exploring relationships through visualizations
+
+This analysis examines the relationship between age, gender, and systolic blood pressure using NHANES data. 
+Four systolic blood pressure measurements were combined to obtain an average SBP for each participant. 
+Participants with missing information for age, gender, or average SBP were then excluded from the analysis.
+``` {r data-prep}
+# Create average Systolic blood pressure
+nhanes_data <- nhanes_data %>%
+  mutate(
+    avg_sbp = rowMeans(
+      select(., systolic_bp_1, systolic_bp_2, systolic_bp_3, systolic_bp_4),
+      na.rm = TRUE
+    ),
+    avg_sbp = ifelse(is.nan(avg_sbp), NA, avg_sbp)
+  )
+# remove individuals who are missing age, gender, or average SBP
+nhanes_final <- nhanes_data %>%
+  filter(
+    !is.na(age),
+    !is.na(gender),
+    !is.na(avg_sbp)
+  )
+# Create the hypertension category
+nhanes_final <- nhanes_final %>%
+  mutate(
+    sbp_category = case_when(
+      avg_sbp < 120 ~ "Normal",
+      avg_sbp >= 120 & avg_sbp < 130 ~ "Elevated",
+      avg_sbp >= 130 & avg_sbp < 140 ~ "Stage 1 hypertension",
+      avg_sbp >= 140 ~ "Stage 2 hypertension"
+    ),
+    sbp_category = factor(
+      sbp_category,
+      levels = c(
+        "Normal",
+        "Elevated",
+        "Stage 1 hypertension",
+        "Stage 2 hypertension"
+      )
+    )
+  )
+
+# Final sample size
+n_data <- nrow(nhanes_data)
+n_final <- nrow(nhanes_final)
+```
+
+### Sample size
+The original NHANES dataset included `r n_data` participants. After excluding participants with missing age, gender, or average SBP, `r n_final` participants remained in the final sample, corresponding to `r round(n_final / n_data * 100, 1) `% of the original sample.
+
+### Gender distribution in final sample
+```{r gender-distribution, echo = FALSE, fig.height=4, fig.width=8, fig.align='center'}
+ggplot(nhanes_final, aes(x = gender)) +
+  geom_bar(aes(fill = gender)) +
+  labs(
+    title = "Gender distribrution",
+    x = "Gender",
+    y = "Number of participants",
+    fill = "Gender"
+  )
+```
+The gender distribution in the final sample is similar to that of the original sample, with a relatively even split between males and females, with slightly more female participants than male participants. 
+
+### Hypertension category distribution
+``` {r sbp_category-plot, echo = FALSE, fig.height=4, fig.width=8, fig.align='center'}
+ggplot(nhanes_final, aes(x = sbp_category)) +
+  geom_bar(fill = "steelblue") +
+  labs(
+    x = "Average systolic blood pressure category",
+    y = "Number of participants"
+  ) +
+  theme_minimal()
+```
+Most participants fell into the normal category (around 12000), while a smaller proportion was in the elevated, stage 1 or stage 2 hypertension categories (around 2500 to 3500 each).
+
+### Hypertension across age and gender
+``` {r sbp_age_gender, echo = FALSE, fig.cap="Distribution of systolic blood pressure categories across age and gender", fig.height=4, fig.width=10, fig.align='center'}
+ggplot(
+  nhanes_final,
+  aes(x = age_cat, fill = sbp_category)
+) +
+  geom_bar(position = "dodge") +
+  facet_wrap(~ gender) +
+  scale_fill_manual(
+        values = c(
+          "Normal" = "#D9F0D3",
+          "Elevated" = "#A6DBA0",
+          "Stage 1 hypertension" = "#5AAE61",
+          "Stage 2 hypertension" = "#1B7837"
+          )
+      ) +
+  labs(
+    x = "Age category",
+    y = "Number of participants",
+    fill = "SBP category"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+```
+
+The proportion of participants with stage 1 and stage 2 hypertension generally increased with age, while normal SBP was more common among younger participants. Similar patterns were observed in both males and females. However, among participants aged 25–39, normal SBP was more common among females than males.
