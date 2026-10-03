@@ -1,10 +1,14 @@
 ---
-title: 'Data Visualization with ggplot2 '
+title: 'NHANES Data Analysis'
 author: "Luck B. Simelus"
 date: "2026-09-27"
 output:
-  pdf_document: default
-  html_document: default
+  html_document:
+    theme: journal
+    highlight: tango
+    toc: true
+    toc_float: true
+    toc_depth: 2
 ---
 
 ```{r setup, include=FALSE}
@@ -20,7 +24,7 @@ knitr::opts_chunk$set(
 # Load the required packages
 library(pacman)
 pacman::p_load(
-  rio, here, tidyverse, knitr, kableExtra, skimr, RColorBrewer, viridis,
+  rio, here, tidyverse, knitr, kableExtra, skimr, RColorBrewer, viridis, DT,
   formatR, gridExtra, janitor, ggplot2, ggpubr, cowplot, gghighlight, ggokabeito
 )
 
@@ -28,9 +32,11 @@ pacman::p_load(
 nhanes_data <- import(here("data", "cleaned_NHANES.csv"))
 ```
 
-## Exercise 1: Reproducing and arranging ggplot2 figures
+## Exercise 1: Reproducing and arranging ggplot2 figures {.tabset}
 
-```{r exrecise-1-cowplot, fig.height=4, fig.width=10, fig.cap="Bar plot of age and ethnicity by gender with cowplot", fig.align='center'}
+### Individual Figures
+
+```{r exrecise-1-fig1_2, fig.height=4, fig.width=10, fig.align='center'}
 # Recreate the figures
 figure_1 <- nhanes_data %>% 
   filter(age >=18) %>%
@@ -41,6 +47,16 @@ figure_2 <- nhanes_data %>%
   ggplot(aes(x = ethnicity_2, fill = gender)) +
   geom_bar(position = "fill")
 
+# display figure 1
+figure_1
+
+# display figure 2
+figure_2
+```
+
+### Combined Figures
+
+```{r exrecise-1-cowplot, fig.height=4, fig.width=10, fig.cap="Bar plot of age and ethnicity by gender with cowplot", fig.align='center'}
 # combine the plots with the cowplot package
 plot_grid(figure_1, figure_2)
 ```
@@ -56,6 +72,13 @@ The layout produced with ggarrange() looks better for these two plots because it
 The cowplot package layout produced two separate legends, which took up unnecessary space and made the combined figure look less clean and almost unreadable.
 
 ## Exercise 2 : Visualizing key characteristics
+
+### Table 1 : NHANES dataset
+
+The cleaned NHANES dataset used for this analysis is displayed below.
+```{r interactive-table}
+datatable(nhanes_data, options = list(scrollX = TRUE))
+```
 
 ### Age
 ```{r exrecise-2-age, fig.height=4, fig.width=8, fig.align='center'}
