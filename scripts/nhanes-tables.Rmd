@@ -42,7 +42,7 @@ The National Health and Nutrition Examination Survey (NHANES) is a program condu
 
 This report provides a descriptive overview of the NHANES sample across the survey waves included in this analysis. The sample is described according to its size, gender, ethnicity, and average systolic blood pressure (SBP).
 
-## Sample composition by NHANES wave
+## NHANES Sample composition by gender and ethnicity
 
 ```{r table-1, echo=FALSE}
 # Summary table of the dataset by gender
