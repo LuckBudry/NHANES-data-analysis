@@ -1,0 +1,189 @@
+---
+title: "Description of the NHANES dataset"
+author: "Luck B. Simelus"
+date: "`r Sys.Date()`"
+output: pdf_document
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE)
+
+# Load the required packages
+library(pacman)
+pacman::p_load(
+  rio, here, tidyverse, knitr, kableExtra,
+  skimr, RColorBrewer, viridis, DT, flexdashboard,
+  formatR, gridExtra, janitor, ggplot2, ggpubr, cowplot, 
+  gghighlight, ggokabeito
+)
+
+# Import the clean NHANES dataset
+nhanes_data <- import(here("data", "cleaned_NHANES.csv"))
+
+# Recode wave_id
+nhanes_data <- nhanes_data %>%
+  mutate(
+    wave_id = recode(
+      wave_id,
+      "2015" = "2013-2014",
+      "2016" = "2015-2016",
+      "2017" = "2017-2018"
+    )
+  )
+```
+
+## Introduction
+
+The National Health and Nutrition Examination Survey (NHANES) is a program conducted by the National Center for Health Statistics (NCHS) to assess the health and nutritional status of the U.S. population[@nhanes]. NHANES combines interviews, physical examinations, and laboratory measurements to provide information on a wide range of health indicators.
+
+This report provides a descriptive overview of the NHANES sample across the survey waves included in this analysis. The sample is described according to its size, gender, ethnicity, and average systolic blood pressure (SBP).
+
+## Sample composition by NHANES wave
+
+```{r table-1, echo=FALSE}
+# Summary table of the dataset by gender
+sample_gender_summary <- nhanes_data %>%
+  group_by(wave_id) %>%
+  summarise(
+    sample_size = n(),
+    male_n = sum(gender == "Male", na.rm = TRUE),
+    male_percent = mean(gender == "Male", na.rm = TRUE) * 100,
+    female_n = sum(gender == "Female", na.rm = TRUE),
+    female_percent = mean(gender == "Female", na.rm = TRUE) * 100
+  )
+
+# Formating with KableExtra
+sample_gender_summary %>%
+  kable(
+    format = "latex",
+    booktabs = TRUE,
+    digits = 1,
+    col.names = c(
+      "NHANES wave",
+      "Sample size",
+      "Males (n)",
+      "Males (%)",
+      "Femaleales (n)",
+      "Females (%)"
+    ),
+    caption = "Sample size and gender distribution by NHANES wave"
+  ) %>%
+  kable_styling(
+    latex_options = "hold_position"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(1, background = "#e6f7ff", bold = TRUE)
+```
+
+The number of participants was almost similar across the three NHANES waves included in the analysis, with the 2015 wave having the most participants. Table 1 summarizes the sample size and gender distribution for each wave. Overall, males represented approximately 49% of the sample, with relatively small differences between waves.
+
+```{r table-2, echo=FALSE}
+# prepare ethnicity stats
+ethnicity_summary <- nhanes_data %>%
+  group_by(wave_id, ethnicity_2) %>%
+  summarise(
+    n = n(),
+    .groups = "drop"
+  ) %>%
+  group_by(wave_id) %>%
+  mutate(
+    percent = n / sum(n) * 100
+  )
+# sort ethnicity by overall samble size across waves
+ethnicity_order <- nhanes_data %>%
+  count(ethnicity_2, sort = TRUE) %>%
+  pull(ethnicity_2)
+# create table
+ethnicity_table <- ethnicity_summary %>%
+  mutate(
+    ethnicity_2 = factor(ethnicity_2, levels = ethnicity_order),
+    value = paste0(n, " (", round(percent, 1), "%)")
+  ) %>%
+  select(wave_id, ethnicity_2, value) %>%
+  pivot_wider(
+    names_from = wave_id,
+    values_from = value
+  ) %>%
+  arrange(ethnicity_2)
+# formating with Kableextra
+ethnicity_table %>%
+  kable(
+    format = "latex",
+    booktabs = TRUE,
+    caption = "Ethnicity distribution by NHANES wave",
+    col.names = c(
+      "Ethnicity",
+      "2013–2014",
+      "2015–2016",
+      "2017–2018"
+    )
+  ) %>%
+  kable_styling(
+    latex_options = "hold_position"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  row_spec(1, background = "#e6f7ff", bold = TRUE)
+```
+
+The ethnic composition of the sample is presented in Table 2. The distribution of ethnic groups between survey waves was about the same.
+White participants represented the largest ethnic group across the waves, followed by Black. 
+
+## Systolic Blood Pressure
+```{r table-3, echo=FALSE}
+# Create average Systolic blood pressure
+nhanes_data <- nhanes_data %>%
+  mutate(
+    avg_sbp = rowMeans(
+      select(., systolic_bp_1, systolic_bp_2, systolic_bp_3, systolic_bp_4),
+      na.rm = TRUE
+    ),
+    avg_sbp = ifelse(is.nan(avg_sbp), NA, avg_sbp)
+  )
+# Summary table of average sbp by wave
+sbp_summary <- nhanes_data %>%
+  group_by(wave_id) %>%
+  summarise(
+    Minimum = min(avg_sbp, na.rm = TRUE),
+    Maximum = max(avg_sbp, na.rm = TRUE),
+    Median = median(avg_sbp, na.rm = TRUE),
+    Mean = mean(avg_sbp, na.rm = TRUE),
+    SD = sd(avg_sbp, na.rm = TRUE)
+  )
+# Formating with Kableextra
+sbp_summary %>%
+  kable(
+    format = "latex",
+    booktabs = TRUE,
+    digits = 1,
+    caption = "Summary statistics for average systolic blood pressure by NHANES wave",
+    col.names = c(
+      "NHANES Wave",
+      "Minimum",
+      "Maximum",
+      "Median",
+      "Mean",
+      "Standard deviation"
+    )
+  ) %>%
+  kable_styling(
+    latex_options = "hold_position"
+  ) %>%
+  row_spec(0, bold = TRUE) %>%
+  column_spec(1, bold = TRUE) %>%
+  column_spec(5, background = "#e6f7ff")
+```
+
+Table 3 summarizes the distribution of average systolic blood pressure across the NHANES waves. The mean average SBP slightly increased with each wave. The median values followed a similar pattern.
+
+## Conclusion
+
+Overall, the NHANES samples were relatively similar in size across the three waves, gender and ethnic composition was also relatively similar. The mean average systolic blood pressure varied somewhat between waves with the 2013-2014 wave having the lowest mean average SBP. 
+These descriptive results provide an overview of the NHANES dataset and the main characteristics of some important variables for the analysis.
+
+## References
