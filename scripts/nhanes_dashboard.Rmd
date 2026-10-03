@@ -1,0 +1,91 @@
+---
+title: "NHANES Dashboard"
+author: "Luck B. Simelus"
+date: "2026-10-03"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE)
+
+# Load the required packages
+library(pacman)
+pacman::p_load(
+  rio, here, tidyverse, knitr, kableExtra,
+  skimr, RColorBrewer, viridis, DT, flexdashboard,
+  formatR, gridExtra, janitor, ggplot2, ggpubr, cowplot, 
+  gghighlight, ggokabeito
+)
+
+# Import the clean NHANES dataset
+nhanes_data <- import(here("data", "cleaned_NHANES.csv"))
+```
+
+Row {data-height=650}
+---------------------------------
+
+### Age distribution
+
+```{r age, echo = FALSE}
+knitr::include_graphics(here("figures", "age_distribrution.png"))
+```
+
+```{r prepare-age, echo = FALSE}
+# Calculate percentage of participants 21 ot older
+percent_21_plus <- nhanes_data %>%
+  summarise(
+    percentage = mean(age >= 21, na.rm = TRUE) * 100
+  ) %>%
+  pull(percentage)
+```
+
+Row {data-height=350}
+-----------------------------------------------------------------------
+
+### Percentage of Participants Aged 21 or Older
+
+```{r percent-age, echo=FALSE}
+gauge(
+  round(percent_21_plus, 1),
+  min = 0,
+  max = 100,
+  sectors = gaugeSectors(
+    success = c(75, 100),
+    warning = c(50, 75),
+    danger = c(0, 50)
+  )
+)
+```
+
+```{r prepare-sbp, echo = FALSE}
+# Create average Systolic blood pressure
+nhanes_data <- nhanes_data %>%
+  mutate(
+    avg_sbp = rowMeans(
+      select(., systolic_bp_1, systolic_bp_2, systolic_bp_3, systolic_bp_4),
+      na.rm = TRUE
+    ),
+    avg_sbp = ifelse(is.nan(avg_sbp), NA, avg_sbp)
+  )
+# Percentage of participants whose average SBP is greater than 120 mm Hg
+percent_sbp_120 <- nhanes_data %>%
+  summarise(
+    percentage = mean(avg_sbp > 120, na.rm = TRUE) * 100
+  ) %>%
+  pull(percentage)
+```
+
+### Participants with Average SBP > 120 mm Hg
+
+```{r sbp120, echo=FALSE}
+valueBox(
+  paste0(round(percent_sbp_120, 1), "%"),
+  caption = "Average SBP above 120 mm Hg",
+  color = "info"
+)
+```
