@@ -15,9 +15,11 @@ Contains the original NHANES datasets used for the analysis, as well as `cleaned
 Contains the figures and visualizations created during the data analysis.
 
 ### `scripts/`
-Contains the R Markdown (`.Rmd`) and R (`.R`) files used for Assessments 2 and 3, as well as the rendered HTML files.
-The updated report from this week's exercise 2 (`assessment_week_3.html`)
-The dashboard from exercise 3 (`nhanes_dashboard.html`)
+Contains the R Markdown (`.Rmd`) and R (`.R`) files used for Assessments 2, 3 and 4 
+and the `references.bib` file for exercise 4 assessment 4.
+
 
 ### `reports/`
-Contains the final PDF reports submitted for Assessments 2 and 3.
+Contains the html file from assessment 2, the updated html report from exercise 2 assessment 4(`assessment_week_3.html`),
+the html dashboard from exercise 3 assessment 4(`nhanes_dashboard.html`) and
+the final PDF reports submitted for Assessments 2, 3 and exercise 4 of assessment 4 (`nhanes-table.pdf`).
