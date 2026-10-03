@@ -16,6 +16,8 @@ Contains the figures and visualizations created during the data analysis.
 
 ### `scripts/`
 Contains the R Markdown (`.Rmd`) and R (`.R`) files used for Assessments 2 and 3, as well as the rendered HTML files.
+The updated report from this week's exercise 2 (`assessment_week_3.html`)
+The dashboard from exercise 3 (`nhanes_dashboard.html`)
 
 ### `reports/`
 Contains the final PDF reports submitted for Assessments 2 and 3.
