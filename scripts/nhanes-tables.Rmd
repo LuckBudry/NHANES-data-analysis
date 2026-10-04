@@ -3,6 +3,7 @@ title: "Description of the NHANES dataset"
 author: "Luck B. Simelus"
 date: "`r Sys.Date()`"
 output: pdf_document
+link-citations: yes
 bibliography: references.bib
 ---
 
@@ -80,7 +81,8 @@ sample_gender_summary %>%
   row_spec(1, background = "#e6f7ff", bold = TRUE)
 ```
 
-The number of participants was almost similar across the three NHANES waves included in the analysis, with the 2015 wave having the most participants. Table 1 summarizes the sample size and gender distribution for each wave. Overall, males represented approximately 49% of the sample, with relatively small differences between waves.
+The number of participants was almost similar across the three NHANES waves included in the analysis, with the 2013-2014 wave having the most participants. 
+Table 1 summarizes the sample size and gender distribution for each wave. Overall, the gender distribution is similar between waves, with a relatively even split between males (about 49%) and female (about 51%).
 
 ```{r table-2, echo=FALSE}
 # prepare ethnicity stats
@@ -179,7 +181,7 @@ sbp_summary %>%
   column_spec(5, background = "#e6f7ff")
 ```
 
-Table 3 summarizes the distribution of average systolic blood pressure across the NHANES waves. The mean average SBP slightly increased with each wave. The median values followed a similar pattern.
+The distribution of average systolic blood pressure across the NHANES waves is summarizes in table 3. The mean average systolic blood pressure slightly increased with each wave. The median values followed a similar pattern.
 
 ## Conclusion
 
